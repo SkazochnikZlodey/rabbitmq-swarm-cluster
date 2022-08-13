@@ -1,4 +1,4 @@
-FROM rabbitmq:3.6.11-management-alpine
+FROM rrabbitmq:3.10.7-management-alpine
 
 ADD join.sh /
 
