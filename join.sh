@@ -9,12 +9,14 @@
 
 # Wait a random amount of seconds (between 1 and 10 seconds) to get in
 # parallel started instances a littel bit out of sync.
+unset iplist
+unset nodes
 echo "Wait random duration..."
 sleep $[ ( $RANDOM % 10 )  + 10 ]s
 
 echo "Try to join rabbitmq cluster..."
 
-# busybox 'nslookup' required
+# 'nslookup' required
 # Try to determine all hosts of this service (given by env var `SERVICE_NAME`).
 # Sometimes wrong hostnames are returned, hence the retry functionality.
 for i in `seq 5`
@@ -25,7 +27,17 @@ do
     exit 1
   fi
   retry=false
-  nodes=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep -v $(hostname) | grep Address | awk '{print $4}' | cut -d. -f1-3`
+
+  iplist=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep Address: | grep -v 127.0.0.1 | grep -v $(hostname -i)| awk '{print $2}'` # ip list
+
+  for ip in $iplist
+  do
+    nodes+=$(echo -e "\n$(nslookup $ip | awk {'print $4'} | cut -d. -f1-3)\n")
+  done
+
+#  nodes=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep -v $(hostname) | grep Address | awk '{print $4}' | cut -d. -f1-3`
+
+
   for node in $nodes
   do
     if [[ "$node" != $SERVICE_NAME* ]]
@@ -68,7 +80,7 @@ do
             rabbitmqctl start_app
             exit 0
         fi
-        # of peer is reachable try to join the cluster of that host
+        # if peer is reachable try to join the cluster of that host
         echo "Try to reach $node"
         if nc -z "$node" 15672
         then
