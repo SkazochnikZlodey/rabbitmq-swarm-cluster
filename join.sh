@@ -28,11 +28,11 @@ do
   fi
   retry=false
 
-  iplist=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep Address: | grep -v 127.0.0.1 | grep -v $(hostname -i)| awk '{print $2}'` # ip list
+  iplist=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep Address: | grep -v 127.0.0.1 | grep -v $(hostname -i | awk '{print $1}') | awk '{print $2}'` # ip list
 
   for ip in $iplist
   do
-    nodes+=$(echo -e "\n$(nslookup $ip | awk {'print $4'} | cut -d. -f1-3)\n")
+    nodes+=$(echo -e "\n$(nslookup $ip 2>/dev/null | awk {'print $4'} | cut -d. -f1-3)\n")
   done
 
 #  nodes=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep -v $(hostname) | grep Address | awk '{print $4}' | cut -d. -f1-3`
